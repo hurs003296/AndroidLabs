@@ -1,10 +1,4 @@
 <resources>
-
-
-    <string name="app_name" translatable="false">Android Labs</string>
-    <string name="button_text">Press Me</string>
-    <string name="hello_world">Hello World!</string>
-
     <!-- Base application theme -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here -->
@@ -12,5 +6,7 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
-
 </resources>
+
+
+
