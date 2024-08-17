@@ -1,22 +1,31 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@android:color/black">
+    android:layout_height="match_parent">
 
-    <ImageView
-        android:id="@+id/imageView"
+    <ListView
+        android:id="@+id/todoListView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="centerCrop" />
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
-    <ProgressBar
-        android:id="@+id/progressBar"
+    <EditText
+        android:id="@+id/todoEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:indeterminate="false"
-        android:max="100"
-        style="?android:attr/progressBarStyleHorizontal"/>
-</RelativeLayout>
+        android:hint="@string/hint_type_here" />
 
+    <Switch
+        android:id="@+id/urgentSwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/urgent" />
 
+    <Button
+        android:id="@+id/addButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/add" />
+</LinearLayout>

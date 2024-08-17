@@ -1,113 +1,112 @@
 package com.example.androidlabs;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.AsyncTask;
+import android.app.AlertDialog;
 import android.os.Bundle;
-import android.util.Log;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.Switch;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import org.json.JSONObject;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private ImageView imageView;
-    private ProgressBar progressBar;
+    private TodoDatabaseHelper dbHelper;
+    private List<TodoItem> todoList;
+    private BaseAdapter todoAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        imageView = findViewById(R.id.imageView);
-        progressBar = findViewById(R.id.progressBar);
+        // Initialize the database helper
+        dbHelper = new TodoDatabaseHelper(this);
 
-        new CatImages().execute();
-    }
+        // Retrieve all todo items from the database
+        todoList = dbHelper.getAllTodoItems();
 
-    private class CatImages extends AsyncTask<Void, Integer, Bitmap> {
+        // Set up views
+        ListView listView = findViewById(R.id.todoListView);
+        EditText editText = findViewById(R.id.todoEditText);
+        Switch urgentSwitch = findViewById(R.id.urgentSwitch);
+        Button addButton = findViewById(R.id.addButton);
 
-        private Bitmap bitmap;
+        // Set up the ListView adapter
+        todoAdapter = new BaseAdapter() {
+            @Override
+            public int getCount() {
+                return todoList.size();
+            }
 
-        @Override
-        protected Bitmap doInBackground(Void... voids) {
-            while (true) {
-                try {
-                    // Fetch JSON data from the URL
-                    URL url = new URL("https://cataas.com/cat?json=true");
-                    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                    InputStream in = urlConnection.getInputStream();
-                    StringBuilder jsonBuilder = new StringBuilder();
-                    int ch;
-                    while ((ch = in.read()) != -1) {
-                        jsonBuilder.append((char) ch);
-                    }
-                    String jsonString = jsonBuilder.toString();
+            @Override
+            public Object getItem(int position) {
+                return todoList.get(position);
+            }
 
-                    // Parse JSON to get image ID and URL
-                    JSONObject jsonObject = new JSONObject(jsonString);
-                    String imageId = jsonObject.getString("id");
-                    String imageUrl = "https://cataas.com/cat/" + imageId;
+            @Override
+            public long getItemId(int position) {
+                return position;
+            }
 
-                    // Check if the image file already exists
-                    File imageFile = new File(getFilesDir(), imageId + ".jpg");
-                    if (imageFile.exists()) {
-                        // Load the image from the device
-                        bitmap = BitmapFactory.decodeFile(imageFile.getAbsolutePath());
-                    } else {
-                        // Download the image and save it locally
-                        URL imageDownloadUrl = new URL(imageUrl);
-                        HttpURLConnection imageConnection = (HttpURLConnection) imageDownloadUrl.openConnection();
-                        InputStream imageStream = imageConnection.getInputStream();
-                        bitmap = BitmapFactory.decodeStream(imageStream);
-
-                        // Save the image to the device
-                        FileOutputStream outputStream = new FileOutputStream(imageFile);
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
-                        outputStream.close();
-                    }
-
-                    // Update the progress bar
-                    for (int i = 0; i < 100; i++) {
-                        publishProgress(i);
-                        Thread.sleep(30); // Adjust the speed if needed
-                    }
-
-                    // Return the bitmap to be displayed
-                    return bitmap;
-
-                } catch (Exception e) {
-                    Log.e("MainActivity", "Error downloading image", e);
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                if (convertView == null) {
+                    convertView = getLayoutInflater().inflate(R.layout.todo_item, parent, false);
                 }
+
+                TodoItem item = todoList.get(position);
+                TextView textView = convertView.findViewById(R.id.todoTextView);
+                textView.setText(item.getText());
+
+                if (item.isUrgent()) {
+                    convertView.setBackgroundColor(getResources().getColor(android.R.color.holo_red_light));
+                    textView.setTextColor(getResources().getColor(android.R.color.white));
+                } else {
+                    convertView.setBackgroundColor(getResources().getColor(android.R.color.white));
+                    textView.setTextColor(getResources().getColor(android.R.color.black));
+                }
+
+                return convertView;
             }
-        }
+        };
 
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            // Update the ProgressBar
-            progressBar.setProgress(values[0]);
+        listView.setAdapter(todoAdapter);
 
-            // If a new image is downloaded, update the ImageView
-            if (values[0] == 0 && bitmap != null) {
-                imageView.setImageBitmap(bitmap);
+        // Add new todo item
+        addButton.setOnClickListener(v -> {
+            String text = editText.getText().toString();
+            boolean isUrgent = urgentSwitch.isChecked();
+
+            if (!text.isEmpty()) {
+                TodoItem newItem = new TodoItem(text, isUrgent);
+                dbHelper.addTodoItem(newItem);  // Save to database
+                todoList.add(newItem);  // Add to list in memory
+                todoAdapter.notifyDataSetChanged();
+                editText.setText("");
             }
-        }
+        });
 
-        @Override
-        protected void onPostExecute(Bitmap result) {
-            // Display the final image when the loop ends
-            imageView.setImageBitmap(result);
-        }
+        // Delete a todo item on long press
+        listView.setOnItemLongClickListener((parent, view, position, id) -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            builder.setTitle(getString(R.string.delete_prompt))
+                    .setMessage(getString(R.string.delete_selected_row) + position)
+                    .setPositiveButton(getString(R.string.yes), (dialog, which) -> {
+                        TodoItem itemToDelete = todoList.get(position);
+                        dbHelper.deleteTodoItem(position);  // Delete from database
+                        todoList.remove(position);  // Remove from list in memory
+                        todoAdapter.notifyDataSetChanged();
+                    })
+                    .setNegativeButton(getString(R.string.no), null)
+                    .show();
+            return true;
+        });
     }
 }
-
-
