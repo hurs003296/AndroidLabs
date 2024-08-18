@@ -13,3 +13,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+# Gradle cache files
+.gradle/
+
+# Android build files
+build/
