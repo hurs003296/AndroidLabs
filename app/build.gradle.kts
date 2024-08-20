@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.androidlabs"
+    namespace = "com.example.starwarsencyclopedia" // Ensure this matches your actual package
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.androidlabs"
+        applicationId = "com.example.starwarsencyclopedia" // Make sure this matches your namespace
         minSdk = 28
         targetSdk = 34
         versionCode = 1
@@ -25,6 +25,7 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
@@ -32,11 +33,11 @@ android {
 }
 
 dependencies {
-
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+    implementation(libs.recyclerview)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
